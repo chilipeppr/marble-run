@@ -11,20 +11,20 @@ This is the prototype breadboard for driving the Marble Run. It has the followin
 - 24V Fan MOSFET Driver
 - 24V Fan
 
-<![alt](/readme/breadboard.jpg)>
+![alt](/readme/breadboard.jpg)
 
 PCB designed in Fusion 360 Electronics and produced at JLCPCB.
-<![alt](/readme/pcb.png)>
+![alt](/readme/pcb.png)
 
 This is a full view of the 8 foot tall Marble Run elevator that carries marbles from the bottom reservoir to the top of the run.
-<![alt](/readme/tallshot.jpg)>
-<![alt](/readme/tallshot.png)>
+![alt](/readme/tallshot.jpg)
+![alt](/readme/tallshot.png)
 
 This is the bottom reservoir. It has an agitator to ensure marbles are continuallyl flowing into the exit pipe, thus
 ensuring the elevator is constantly picking up a new marble.
-<![alt](/readme/reservoir.jpg)>
-<![alt](/readme/reservoir.png)>
+![alt](/readme/reservoir.jpg)
+![alt](/readme/reservoir.png)
 
 This is the motor at top which rotates the GT2 timing belt. It is a NEMA 23 stepper motor.
-<![alt](/readme/motor.jpg)>
-<![alt](/readme/motor.png)>
+![alt](/readme/motor.jpg)
+![alt](/readme/motor.png)
