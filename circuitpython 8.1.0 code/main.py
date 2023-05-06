@@ -1,6 +1,6 @@
 # This file is the file initially loaded by the ESP-32 S2 CircuitPython
-# We need to watch for a kill switch and if we don't get it after 5 seconds
-# we run our main code.
+# We watch for a kill switch, i.e. a button on GPIO1, and if it's on we
+# don't proceed with running the main program.
 
 from killswitch.killswitch import KillSwitch
 from reboot.r import RebootReason
@@ -30,12 +30,13 @@ def main():
         r.logToFileWithWifi("From main.py. Kill switch off.")
 
         # Create our display hardware object so we spit out our IP address to display
-        import display.display
-        d = display.display.Display()
+        # import display.display
+        # d = display.display.Display()
 
         # Dump log file
         r.dumpLogFile()
 
         import main_kitchensink
+        # import main_test_why_circuitpython_hardfaults
 
 main()

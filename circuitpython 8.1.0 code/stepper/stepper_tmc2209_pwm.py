@@ -12,7 +12,7 @@ class StepperState():
     DECELERATING = 3
     STOPPED = 4
 
-class Stepper:
+class StepperElevator:
 
     def __init__(self, onAccelCb=None, onMaxSpeedCb=None, onDecelCb=None, onStoppedCb=None):
 

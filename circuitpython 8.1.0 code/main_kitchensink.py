@@ -73,6 +73,11 @@ Button Listener
     In button/button.py
 
     self._pinButtonPin = board.IO21
+
+Kill Switch Button
+    In killswitch/killswitch.py
+    
+    self._pinKillSwitchPin = board.IO1
 """
 
 

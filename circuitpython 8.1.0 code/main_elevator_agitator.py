@@ -9,7 +9,7 @@
 import asyncio
 from button.button import Button 
 # from button_mimic import ButtonMimic 
-from stepper.stepper_tmc2209_pwm import Stepper
+from stepper.stepper_tmc2209_pwm import StepperElevator
 from stepper.stepper_tmc2209_pa_pwmagitator import StepperAgitator
 import microcontroller
 
@@ -74,7 +74,7 @@ class Dashboard:
         self.interrupt_task = asyncio.create_task(self._button.asyncTaskCatchButtonPinPress())
 
         # Create stepper object so we can call spin on button press/release
-        self._stepper = Stepper()
+        self._stepper = StepperElevator()
         self._stepper.enable()
 
         # Create stepperAgitator object so we can call rock on button press/release

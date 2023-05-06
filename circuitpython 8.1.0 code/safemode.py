@@ -3,8 +3,7 @@
 # and then do a full reboot back to normal mode. So, we're basically overriding this
 # safety measure as we're in production and we know we have good code. So, I don't
 # want to get the Marble Run into a state where it's not responding. I have seen
-# reboots to safe mode after 24 hours and I'm not sure why, so just handle this by rebooting
-# every night at midnight.
+# reboots to safe mode every several hours and I'm not sure why, so just handle this by rebooting.
 
 from killswitch.killswitch import KillSwitch
 from reboot.r import RebootReason
