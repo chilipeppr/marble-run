@@ -47,6 +47,10 @@ This is the driver board for the Marble Run. It has the following main modules:
 - 24V Fan MOSFET Driver
 - 24V Fan
 
+You can view the board online in the Autodesk Gallery.
+https://a360.co/3p5fhET
+
+
 <img src="readme/driverboard.png" width="500">
 
 This is a screenshot of what the PCB looks like inside Fusion 360.
