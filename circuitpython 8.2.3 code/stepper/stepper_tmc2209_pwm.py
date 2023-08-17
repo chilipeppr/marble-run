@@ -1,4 +1,6 @@
 # The Liberty Christian Stepper Motor Library for CircuitPython
+# This drives the main elevator stepper motor
+
 import digitalio
 import board
 import time
@@ -49,7 +51,10 @@ class Stepper:
 
         # setup pinStep as PWM output
         self.freqMin = 10   # we can't go below this (pwm hardware won't support it)
-        self.freqMax = 300 #700 #1000 # we can't go above as motor would turn too fast
+        # v2 has 3 gears: 10 teeth to 18 to 38, so 10/18 = 0.55 turns on gear 2 for 1 turn on gear 1 (the stepper motor)
+        # then 18/38 for gear 2 to 3 is 0.47. so 0.55 * 0.47 = 0.26. so for 1 turn in we get a 1/4 turn out which is 4:1 reduction
+        # so 300 rpm in v1 to have same speed in v2 is 300 * 4 = 1200
+        self.freqMax = 1200 #1200 for v2 with gearing #300 for v1 with straight stepper rather than with gearing #700 #1000 # we can't go above as motor would turn too fast
         self.freqStep = 3 * 10 # since doing 0.1 sleep, if 0.01 sleep use 3  # when accel/decel on stepper this is the amount of ramp
         self._pinStep = pwmio.PWMOut(
             self._pinStepPin, 
@@ -228,9 +233,16 @@ class Stepper:
                 # print("Increasing freq")
 
                 if self.freq == self.freqMin and self._pinStep.duty_cycle == 0:
-                    # 1st turn on. Need to turn on duty cycle to 50%. Then set freq.
+                    # 1st turn on. 
+                    
+                    # Enable stepper. in v1 we left the motor on all the time, so this is a diff approach
+                    # so we don't burn out the driver running 24x7
+                    self.enable()
+
+                    # Need to turn on duty cycle to 50%. Then set freq.
                     self._pinStep.duty_cycle = 32768
                     self._pinStep.frequency = self.freq
+                    
                     print("Elevator 1st turn on. Setting duty to 50%. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency, "duty:", self._pinStep.duty_cycle)
 
                     # Set our state. We can call this multiple times. It will automatically only generate one callback.
@@ -273,6 +285,11 @@ class Stepper:
                                         
                     # Set our state. We can call this multiple times. It will automatically only generate one callback.
                     self.setState(StepperState.STOPPED)
+
+                    # disable motor. in v1 we left the motor on all the time, so this is a diff approach
+                    # so we don't burn out the driver running 24x7
+                    if self._pinEnable.value != True: 
+                        self.disable()
 
                 else:
                     # Decrease freq

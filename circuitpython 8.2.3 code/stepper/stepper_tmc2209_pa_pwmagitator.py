@@ -4,34 +4,15 @@ import board
 import time
 import asyncio
 import pwmio
-# import enum
 
-class StepperState():
-    ACCELERATING = 1
-    MAXSPEED = 2
-    DECELERATING = 3
-    STOPPED = 4
+class StepperAgitator:
+    def __init__(self, *args):
 
-class Stepper:
-
-    def __init__(self, onAccelCb=None, onMaxSpeedCb=None, onDecelCb=None, onStoppedCb=None):
-
-        print("Initting Elevator Stepper library...")
-
-        # Setup callbacks
-        self.onAccelCb = onAccelCb
-        self.onMaxSpeedCb = onMaxSpeedCb
-        self.onDecelCb = onDecelCb
-        self.onStoppedCb = onStoppedCb
-
-        # Setup our state
-        self.state = StepperState.STOPPED
-
-        # Setup pins
-        self._pinEnablePin = board.IO5
-        self._pinDirPin = board.IO6
-        self._pinStepPin = board.IO7
-        self._pinDiagPin = board.IO8
+        print("Initting PWM Agitator Stepper library...")
+        self._pinEnablePin = board.IO13
+        self._pinDirPin = board.IO14
+        self._pinStepPin = board.IO15
+        self._pinDiagPin = board.IO16
         # self._pinMs1Pin = board.IO9
         # self._pinMs2Pin = board.IO15
 
@@ -42,15 +23,14 @@ class Stepper:
         self._pinEnable.direction = digitalio.Direction.OUTPUT
         self._pinDir = digitalio.DigitalInOut(self._pinDirPin)
         self._pinDir.direction = digitalio.Direction.OUTPUT
-        # self._pinStep = digitalio.DigitalInOut(self._pinStepPin)
-        # self._pinStep.direction = digitalio.Direction.OUTPUT
+        self._pinDir.value = False
         self._pinDiag = digitalio.DigitalInOut(self._pinDiagPin)
         self._pinDiag.direction = digitalio.Direction.INPUT
 
         # setup pinStep as PWM output
         self.freqMin = 10   # we can't go below this (pwm hardware won't support it)
-        self.freqMax = 300 #700 #1000 # we can't go above as motor would turn too fast
-        self.freqStep = 3 * 10 # since doing 0.1 sleep, if 0.01 sleep use 3  # when accel/decel on stepper this is the amount of ramp
+        self.freqMax = 200 #1000 # we can't go above as motor would turn too fast
+        self.freqStep = 3 * 100 # since doing 0.1 sleep, if 0.01 sleep use 3  # when accel/decel on stepper this is the amount of ramp
         self._pinStep = pwmio.PWMOut(
             self._pinStepPin, 
             frequency=self.freqMax, # Not allowed to set to 0, so use duty_cycle as our method of turning off stepper
@@ -76,7 +56,8 @@ class Stepper:
         self.disable()
 
         # ensure fwd
-        self.fwd()
+        # self.fwd()
+        # self.rev()
 
         # For our async spin method, let's create a boolean that we can watch
         # so if it becomes True, we can exit the async process
@@ -90,7 +71,7 @@ class Stepper:
 
     def dump(self):
         # print vals of pins on init
-        print("---Elevator DUMP----")
+        print("---AGITATOR DUMP----")
         print("Enable:", self._pinEnable.value)
         print("Dir:", self._pinDir.value)
         print("Step: Freq:", self._pinStep.frequency, "Duty:", self._pinStep.duty_cycle)
@@ -127,22 +108,26 @@ class Stepper:
         # enable driver
         self._pinEnable.value = False 
         # self._pinEnable.pull = digitalio.Pull.DOWN
-        print("Elevator Enabled")
+        print("Agitator Enabled")
 
     def disable(self):
         # Enable Motor Outputs (GND=on, VIO=off)
         # enable driver
         self._pinEnable.value = True 
         # self._pinEnable.pull = digitalio.Pull.UP
-        print("Elevator Disabled")
+        print("Agitator Disabled")
 
     def fwd(self):
-        print("Elevator Going fwd")
-        self._pinDir.value = True
+        print("Agitator Going fwd")
+        # self._pinDir.value = True
+        self._pinDir.pull = digitalio.Pull.UP
+
 
     def rev(self):
-        print("Elevator Going rev")
-        self._pinDir.value = False
+        print("Agitator Going rev")
+        # self._pinDir.value = False
+        self._pinDir.pull = digitalio.Pull.DOWN
+
 
     def setMinPulseWidth(self, seconds):
         print("Set min pulse width:", seconds)
@@ -155,34 +140,13 @@ class Stepper:
         self._pinDiag.deinit()
         # self._pinMs1.deinit()
         # self._pinMs2.deinit()
-        print("Elevator Deinitted")
+        print("Agitator Deinitted")
 
     def spinAsyncStop(self):
         self._isAsyncSpinning = False
 
     def spinAsyncStart(self):
         self._isAsyncSpinning = True
-
-    def setState(self, state:StepperState):
-        """Tell us what state you're setting and we will produce the callbacks if there
-        was a change of state."""
-
-        lastState = self.state
-
-        # Set our state
-        self.state = state
-
-        if state != lastState:
-            # We have a state change
-            # Call the callback
-            if state == StepperState.ACCELERATING:
-                if self.onAccelCb != None: self.onAccelCb()
-            elif state == StepperState.MAXSPEED:
-                if self.onMaxSpeedCb != None: self.onMaxSpeedCb()
-            elif state == StepperState.DECELERATING:
-                if self.onDecelCb != None: self.onDecelCb()
-            elif state == StepperState.STOPPED:
-                if self.onStoppedCb != None: self.onStoppedCb()
 
     async def spinAsyncTaskPwm(self):
         """This method starts an infinite loop task to spin the stepper motor.
@@ -194,7 +158,7 @@ class Stepper:
         loop. It can also increase the frequency as it moves along and decrease the frequency
         as it stops."""
 
-        print("Elevator Starting infinite async spin PWM task...")
+        print("Agitator Starting infinite async spin PWM task...")
         
         # define preFreq out here so it doesn't get recreated each time thru while loop
         prevFreq = -1
@@ -231,32 +195,25 @@ class Stepper:
                     # 1st turn on. Need to turn on duty cycle to 50%. Then set freq.
                     self._pinStep.duty_cycle = 32768
                     self._pinStep.frequency = self.freq
-                    print("Elevator 1st turn on. Setting duty to 50%. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency, "duty:", self._pinStep.duty_cycle)
-
-                    # Set our state. We can call this multiple times. It will automatically only generate one callback.
-                    self.setState(StepperState.ACCELERATING)
+                    print("Agitator 1st turn on. Setting duty to 50%. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency, "duty:", self._pinStep.duty_cycle)
 
                 elif self.freq == self.freqMax:
                     # They are at max speed. So leave alone.
                     # print("At max freq. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency)
-                    # pass 
-                    # Set our state. We can call this multiple times. It will automatically only generate one callback.
-                    self.setState(StepperState.MAXSPEED)
+                    pass 
 
                 elif self.freq > self.freqMax:
-                    # print("Elevator ERROR: self.freq is > than freqMax. Huh? This should never happen. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency)
-                    # pass 
-                    # Set our state. We can call this multiple times. It will automatically only generate one callback.
-                    self.setState(StepperState.MAXSPEED)
-
-
+                    # They are at max speed. So leave alone.
+                    # This is not really an error as the pwm subsystem doesn't always
+                    # set at exactly the value you ask for.
+                    # print("Agitator ERROR: self.freq is > than freqMax. Huh? This should never happen. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency)
+                    pass 
+                
                 else:
                     # Just increase freq
                     self.freq = self.freq + self.freqStep
                     self._pinStep.frequency = self.freq
                     # print("Increase freq. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency)
-                    # Set our state. We can call this multiple times. It will automatically only generate one callback.
-                    self.setState(StepperState.ACCELERATING)
 
             else:
                 # print("Decreasing freq")
@@ -265,23 +222,16 @@ class Stepper:
                     # We need to stop motor by setting duty to 0
                     if self._pinStep.duty_cycle > 0:
                         self._pinStep.duty_cycle = 0
-                        print("Elevator Just turned off motor. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency, "duty:", self._pinStep.duty_cycle)
+                        print("Agitator Just turned off motor. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency, "duty:", self._pinStep.duty_cycle)
                     else:
                         # do nothing as motor is off and we should just ignore
                         # print("Motor is idle. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency)
                         pass
-                                        
-                    # Set our state. We can call this multiple times. It will automatically only generate one callback.
-                    self.setState(StepperState.STOPPED)
-
                 else:
                     # Decrease freq
                     self.freq = self.freq - self.freqStep
                     self._pinStep.frequency = self.freq
                     # print("Decrease freq. prevFreq:", prevFreq, "newFreq:", self.freq, "actual:", self._pinStep.frequency)
-                    
-                    # Set our state. We can call this multiple times. It will automatically only generate one callback.
-                    self.setState(StepperState.DECELERATING)
 
             # check to see if diag pin went high and print error
             self.checkDiag()
@@ -302,14 +252,14 @@ class Stepper:
         """This method checks the value of the Diag pin to see if it is high. If it is, we print an error."""
 
         if self._pinDiag.value == True and time.time() - self._lastTimeDiagShown > 1:
-            print("Elevator Diag Pin ERROR!!!")
+            print("Agitator Diag Pin ERROR!!!")
             self._lastTimeDiagShown = time.time()
             
 # Test Code
 
 # async def testAsyncSpin():
 #     print("Testing async spin")
-#     s = Stepper()
+#     s = StepperAgitator()
 #     s.enable()
 #     # start spinning
 #     spin_task = asyncio.create_task(s.spinAsyncTaskPwm())
