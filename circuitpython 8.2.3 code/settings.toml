@@ -1,7 +1,7 @@
-CIRCUITPY_WIFI_SSID = "BotLife"
-CIRCUITPY_WIFI_PASSWORD = "freedom21"
-CIRCUITPY_WEB_API_PASSWORD = "freedom21"
+CIRCUITPY_WIFI_SSID = "***"
+CIRCUITPY_WIFI_PASSWORD = ""***""
+CIRCUITPY_WEB_API_PASSWORD = ""***""
 CIRCUITPY_WEB_API_PORT = 80
 
-aio_username = "jlauer12"
-aio_key = "aio_paMC153kcX2TSt3Str3KnLBeGOHL"
+aio_username = ""***""
+aio_key = ""***""
