@@ -3,30 +3,26 @@ import board
 import asyncio
 import microcontroller
 import neopixel
+import supervisor
 
 class Main:
     def __init__(self):
 
         print("Initting main code")
 
-        # Setup touch buttons
-        self.touch = []
-        for i in range(14):
-            # self.touch.append(1) 
-            pinStr = "board.IO" + str(i+1)
-            # print("Creating touch pin:", pinStr)
-            self.touch.append(
-                touchio.TouchIn(eval(pinStr))
-            )
+        # This is threshold for the touch sensors whereby if the raw_value
+        # goes above the configured value on boot up, it triggers a touch
+        # The default is 100
+        self.threshold = 60
 
-            # Set threshold lower than the default 100 for each one
-            self.touch[i].threshold -= 60
-       
-
+        # Base brightness of blue color that shows across whole strip while idel
+        self.baseBlue = 5
+        
+        # We will create the task later in the process
         self.touch_watcher_task = None # asyncio.create_task(self.asyncTouchWatcherTask())
 
         # Setup LEDs
-        pixel_pin = board.IO17
+        pixel_pin = board.IO21
         self.num_pixels = 28
 
         self.pixels = neopixel.NeoPixel(pixel_pin, self.num_pixels, brightness=1.0, auto_write=False, pixel_order=neopixel.GRB)
@@ -45,9 +41,8 @@ class Main:
         # self.color_cycle_task = asyncio.create_task(self.asyncRainbowCycleTask())
 
         # Create an async timer that reboots the ESP32-S2 every 8 hours
-        # self.reboot_timer_task = asyncio.create_task(self.rebootTimer(60))  # 1 minute for testing
+        # self.reboot_timer_task = asyncio.create_task(self.rebootTimer(20))  # 1 minute for testing
         self.reboot_timer_task = asyncio.create_task(self.rebootTimer(60*60*8)) # 8 hours
-
         
     def runStartupColors(self):
 
@@ -108,6 +103,24 @@ class Main:
         for i in range(14):
             print("Touch", i+1, ", Raw:", self.touch[i].raw_value, "Thresh:", self.touch[i].threshold)
 
+    def setupTouchButtons(self):
+        
+        print("Setting up touch buttons...")
+
+        # Setup touch buttons
+        self.touch = []
+        for i in range(14):
+            # self.touch.append(1) 
+            pinStr = "board.IO" + str(i+1)
+            # print("Creating touch pin:", pinStr)
+            self.touch.append(
+                touchio.TouchIn(eval(pinStr))
+            )
+
+            # Set threshold lower than the default 100 for each one
+            # So remove the 100 that Adafruit added, then add our own
+            self.touch[i].threshold = self.touch[i].threshold - 100 + self.threshold
+       
     async def runThresholdTest(self):
 
         # We are going to run a test where we keep track of the max, min, avg, numSamples of each
@@ -155,10 +168,31 @@ class Main:
         for i in range(14):
             print(i, d[i]["min"], d[i]["max"], d[i]["runTot"], 0,  d[i]["numSamples"])
 
+    def showGreenLeds(self):
+
+        self.pixels.fill(self.GREEN)
+        self.pixels.show()
+
+    def showRedLeds(self):
+
+        self.pixels.fill(self.RED)
+        self.pixels.show()
+
+    def showPurpleLeds(self):
+
+        self.pixels.fill(self.PURPLE)
+        self.pixels.show()
+
+    def show2YellowLeds(self):
+
+        self.pixels[0] = self.YELLOW
+        self.pixels[27] = self.YELLOW
+        self.pixels.show()
+
     async def asyncTouchWatcherTask(self):
         print("Starting infinite async touch watcher loop")
 
-        self.pixels.fill(self.BLACK)
+        self.pixels.fill((0,0,self.baseBlue))
         self.pixels.show()
 
         # The amount of color in each of the rgb to decrement each time thru loop if touch is not present
@@ -196,14 +230,14 @@ class Main:
 
                     # see if we need a change
                     curBlue = self.pixels[i*2][2]
-                    if curBlue > 0:
+                    if curBlue > self.baseBlue:
 
                         isDirty = True
 
                         # just change blue since that's all we're doing
                         newBlue = curBlue - decrementPerStep
-                        if newBlue < 0:
-                            newBlue = 0
+                        if newBlue < self.baseBlue:
+                            newBlue = self.baseBlue
                         self.pixels[i*2] = (0, 0, newBlue)
                         self.pixels[(i*2) + 1] = (0, 0, newBlue)
 
@@ -216,6 +250,7 @@ class Main:
 
             # sleep 1 second 
             await asyncio.sleep(0.000001) 
+            # await asyncio.sleep(0.001) 
 
     async def rebootTimer(self, duration):
         print("Starting reboot timer. Duration (secs):", duration)
@@ -223,22 +258,52 @@ class Main:
         await asyncio.sleep(duration) # don't forget the await
         
         print("Rebooting manually")
+        
+        # Show some yellow led's to indicate reboot timer in case something goes weird
+        self.show2YellowLeds()
+
         # Rebooting
         microcontroller.reset()
 
         print("Ended reboot timer")
 
+    async def asyncDelayTask(self, delay):
+        
+        print("Starting delay task for delay:", delay)
+        
+        # sleep 0.01 second per loop 
+        await asyncio.sleep(delay)
+
+        print("Done running delay task")
+
 async def main():
+
     
+
+    # if we made it here we did not get rebooted
     m = Main()
 
     # f = await asyncio.wait_for(
     #     m.color_cycle_task
     # )
 
-    # Run this first
+    # Run this first to show boot up
     asyncio.run(m.asyncRainbowCycleTask())
+
+    # We seem to be getting weirdness on the touch threshold
+    # So, let's do a delay at boot to let things settle down, then
+    # continue on with turning on touch buttons
+    m.showRedLeds()
+    asyncio.run(m.asyncDelayTask(1))
+
+    # Show green that we're go
+    m.showGreenLeds()
     
+    # Setup touch buttons
+    # We do this after the rainbow cycle so things settle down on the ESP32 so our threshold read
+    # that occurs during setup is the most accurate to the standing capacitance levels
+    m.setupTouchButtons()
+
     # Dump all the threshold vals for debug
     m.dumpAllThresholdVals()
     # asyncio.run(m.runThresholdTest())
@@ -246,10 +311,21 @@ async def main():
     # Now create the touch task
     m.touch_watcher_task = asyncio.create_task(m.asyncTouchWatcherTask())
 
+    # if this is our first power_on then do a reboot from software
+    # for some reason we are getting hung up on first power on when just using
+    # 24v to 5v DC DC converter, so this is a workaround to reboot from software
+    # which seems to fix the problem
+    if microcontroller.cpu.reset_reason == microcontroller.ResetReason.POWER_ON:
+
+        print("Rebooting cuz first time power up, so hopefully reboot clears things up")
+        m.showPurpleLeds()
+        # Rebooting
+        microcontroller.reset()
+        
     # Then run the infinite loops
     await asyncio.gather(
         # m.color_cycle_task
-        # m.touch_watcher_task,
+        m.touch_watcher_task,
         m.reboot_timer_task
     )  # Don't forget the await!
     
