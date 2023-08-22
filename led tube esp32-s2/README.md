@@ -17,6 +17,11 @@ There is also a 24v to 5v DC to DC converter used in the circuit so that
 you can power the LED tube from the 24v wire that runs along the marble run
 track. New wall magnet brackets were designed to accomodate the 24v wire.
 
+This is a photo of the LED Tube hanging on the metal wall plate with magnets. It's lit up at 5% level of blue
+on the LED's during idle to indicate it's on and ready for a marble to roll through it.
+
+<img src="images/onwall.jpg" width="500">
+
 Front photo of LED Tube
 
 <img src="images/front.jpg" width="500">
