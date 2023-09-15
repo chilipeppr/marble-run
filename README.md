@@ -72,6 +72,27 @@ This is the board mocked up on a breadboard first before creating the final PCB.
 
 ![alt](/readme/breadboard.jpg)
 
+# Schematic
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/ab1e4768-155b-472a-8337-664bac7dedd9)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/77df9f94-a316-460b-8160-3ad05a69acf3)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/a01d9cb4-646b-47ab-bb43-1ae513a5353d)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/9f824077-9d25-42f8-9c50-8f611300ec4d)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/b899c780-5d02-4fc7-a207-558d5ebe35f7)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/ece6e910-23f4-4a20-9ee0-aab19e32e233)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/f394e4fc-905f-47b2-a475-5439ef59b99e)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/022455ca-1d08-4faa-8d71-36b8b0b1aede)
+
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/1529e6f1-1a15-4275-9246-a3933405c4f4)
+
+
 # Details of the Marble Run Components
 
 This is a full view of the 8 foot tall Marble Run elevator that carries marbles from the bottom reservoir to the top of the run. This was mocked up prior to installing in the lab.
