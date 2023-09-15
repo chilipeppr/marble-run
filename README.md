@@ -82,7 +82,7 @@ This is the board mocked up on a breadboard first before creating the final PCB.
 
 ![image](https://github.com/chilipeppr/marble-run/assets/7904621/9f824077-9d25-42f8-9c50-8f611300ec4d)
 
-![image](https://github.com/chilipeppr/marble-run/assets/7904621/b899c780-5d02-4fc7-a207-558d5ebe35f7)
+![image](https://github.com/chilipeppr/marble-run/assets/7904621/f133bea5-9ac8-4156-bd3d-24a1adf82275)
 
 ![image](https://github.com/chilipeppr/marble-run/assets/7904621/ece6e910-23f4-4a20-9ee0-aab19e32e233)
 
