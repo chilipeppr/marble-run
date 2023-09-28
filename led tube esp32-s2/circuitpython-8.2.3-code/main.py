@@ -1,3 +1,4 @@
+import time
 import touchio
 import board
 import asyncio
@@ -10,10 +11,13 @@ class Main:
 
         print("Initting main code")
 
+        # How many touch sensors. They must be in contiguous order starting at Touch1, i.e. board.IO1
+        self.numTouchSensors = 14
+
         # This is threshold for the touch sensors whereby if the raw_value
         # goes above the configured value on boot up, it triggers a touch
         # The default is 100
-        self.threshold = 60
+        self.threshold = 100 
 
         # Base brightness of blue color that shows across whole strip while idel
         self.baseBlue = 5
@@ -100,7 +104,7 @@ class Main:
 
     def dumpAllThresholdVals(self):
         
-        for i in range(14):
+        for i in range(self.numTouchSensors):
             print("Touch", i+1, ", Raw:", self.touch[i].raw_value, "Thresh:", self.touch[i].threshold)
 
     def setupTouchButtons(self):
@@ -112,7 +116,7 @@ class Main:
         for i in range(14):
             # self.touch.append(1) 
             pinStr = "board.IO" + str(i+1)
-            # print("Creating touch pin:", pinStr)
+            print("Creating touch pin:", pinStr)
             self.touch.append(
                 touchio.TouchIn(eval(pinStr))
             )
@@ -128,7 +132,7 @@ class Main:
         
         d = []
 
-        for i in range(14):
+        for i in range(self.numTouchSensors):
 
             # create data entry
             d.append({
@@ -137,13 +141,17 @@ class Main:
                 "runTot": None,
                 "numSamples": 0
             })
-            print("d[" + str(i) + "]", d[i])
+
+            # print prev test
+            if i > 0:
+                print("d[" + str(i-1) + "]", d[i-1])
 
             for testCtr in range(10):
                 # run 10 tests
                 raw = self.touch[i].raw_value
                 
                 # see if first time thru
+                print("i:", i, "testCtr:", testCtr, "raw:", raw, "raw_value:", self.touch[i].raw_value)
                 if d[i]["min"] == None:
                     # it is first time thru, so just set raw to all min, max, and avg
                     d[i]["min"] = d[i]["max"] = d[i]["runTot"] = raw
@@ -161,11 +169,12 @@ class Main:
 
                 d[i]["numSamples"] += 1
 
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(0.5)
+                # time.sleep(0.5)
 
         # Now dump test
         print("Indx", "Min", "Max", "RunTot", "Avg", "NumSamp")
-        for i in range(14):
+        for i in range(self.numTouchSensors):
             print(i, d[i]["min"], d[i]["max"], d[i]["runTot"], 0,  d[i]["numSamples"])
 
     def showGreenLeds(self):
@@ -204,8 +213,17 @@ class Main:
         # this is for extra loop speed
         isDirty = False 
 
+        # keep track of a loop counter just so we can see how fast we're looping
+        # i.e. are we achieving our expected rate
+        loopCtr = 0
+
+        dirtyCtr = 0
+        triggerCtr = 0
+        
         while True:
 
+            loopCtr += 1
+            
             # print("In touch watcher async loop, checking on touch state...")
 
             # Fade to black incrementally each time thru loop
@@ -213,11 +231,12 @@ class Main:
 
             isDirty = False
 
-            for i in range(14):
+            for i in range(self.numTouchSensors):
 
                 if self.touch[i].value:
 
                     isDirty = True
+                    triggerCtr += 1
 
                     # print("touch1")
                     # self.pixels.brightness = 1.0
@@ -232,7 +251,9 @@ class Main:
                     curBlue = self.pixels[i*2][2]
                     if curBlue > self.baseBlue:
 
+                        # print("nc")
                         isDirty = True
+                        dirtyCtr += 1
 
                         # just change blue since that's all we're doing
                         newBlue = curBlue - decrementPerStep
@@ -248,9 +269,15 @@ class Main:
                 # so we can pick up touches faster
                 pass
 
-            # sleep 1 second 
-            await asyncio.sleep(0.000001) 
-            # await asyncio.sleep(0.001) 
+            if loopCtr >= 1000:
+                loopCtr = 0
+                print("Hit 1000 loops (1 secs) on touch watcher. dirtyCtr:", dirtyCtr, "triggerCtr:", triggerCtr)
+                dirtyCtr = 0
+                triggerCtr = 0
+
+            # sleep 1000/th of a second 
+            # await asyncio.sleep(0.000001) 
+            await asyncio.sleep(0.0001) 
 
     async def rebootTimer(self, duration):
         print("Starting reboot timer. Duration (secs):", duration)
@@ -306,7 +333,7 @@ async def main():
 
     # Dump all the threshold vals for debug
     m.dumpAllThresholdVals()
-    # asyncio.run(m.runThresholdTest())
+    asyncio.run(m.runThresholdTest())
 
     # Now create the touch task
     m.touch_watcher_task = asyncio.create_task(m.asyncTouchWatcherTask())
